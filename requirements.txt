@@ -1,0 +1,6 @@
+streamlit
+selenium
+google-genai
+PyMuPDF
+requests
+beautifulsoup4

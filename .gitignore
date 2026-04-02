@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+
+# Test scripts
+test.py
+test_selenium.py
+test_pagination.py
