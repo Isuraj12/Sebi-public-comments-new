@@ -68,7 +68,11 @@ def generate_summary(circular_id, api_key):
         return f"Could not extract text from {actual_pdf_url}"
         
     print("Calling Gemini API...")
-    full_prompt = get_analyst_prompt(text)
+    
+    if circular.get('category') == 'SEBI Circulars':
+        full_prompt = get_circular_prompt(text)
+    else:
+        full_prompt = get_analyst_prompt(text)
     
     try:
         client = genai.Client(api_key=api_key)
@@ -200,4 +204,87 @@ How will SEBI ensure that [specific reform] does not create duplicative complian
 
 What mechanisms are in place to align this reform with global capital-market standards?
 (Continue up to 5.)
+{circular_text}"""
+
+def get_circular_prompt(circular_text):
+    return f"""You are a regulatory document analyst specializing in financial and securities law. 
+Carefully read the uploaded circular/regulatory document and provide a structured, 
+detailed summary covering ALL of the following sections:
+
+---
+
+**1. DOCUMENT IDENTIFICATION**
+- Circular/Reference Number
+- Date of Issue
+- Issuing Authority
+- Addressed To (recipients)
+- Signatory and Designation
+
+---
+
+**2. SUBJECT / PURPOSE**
+- State the exact subject line
+- Explain in plain language what this circular is about and why it was issued
+
+---
+
+**3. BACKGROUND & CONTEXT**
+- What existing regulation, rule, or earlier circular is this building upon?
+- What problem, gap, or representation triggered this circular?
+
+---
+
+**4. REFERENCES TO PREVIOUS CIRCULARS / REGULATIONS**
+- List every prior circular, regulation, or legal provision mentioned
+- For each, provide: Name, Number/Reference, Date (if mentioned), and its 
+  relevance to the current circular
+
+---
+
+**5. KEY CHANGES / DIRECTIONS**
+- What specific changes, modifications, or clarifications are being made?
+- If any paragraph or provision is being replaced or amended, state both 
+  the OLD text and the NEW text side by side
+- Who is affected by these changes?
+
+---
+
+**6. NEW REQUIREMENTS & OBLIGATIONS**
+- List all new obligations imposed on any party (e.g., timelines, 
+  reporting duties, disclosures, compliances)
+- Include specific deadlines, frequencies, or formats if mentioned
+
+---
+
+**7. LEGAL BASIS / AUTHORITY**
+- Under which Act(s), Section(s), or Regulation(s) is this circular issued?
+
+---
+
+**8. EFFECTIVE DATE**
+- When does this circular come into force?
+
+---
+
+**9. WHERE TO ACCESS**
+- Mention any website or official source where this circular is published
+
+---
+
+**10. PLAIN LANGUAGE SUMMARY**
+- Write a 5–8 line simple summary that a non-legal person can easily 
+  understand — what changed, why it changed, and what action (if any) 
+  is needed
+
+---
+
+Instructions:
+- Do NOT skip any section. If information is not available for a section, 
+  write "Not mentioned in the document."
+- Preserve all proper nouns, reference numbers, dates, and regulation 
+  names exactly as they appear in the document.
+- Highlight any deadlines or action items in **bold**.
+- If a provision has sub-clauses or conditions, list each one separately.
+
+Document text:
 {circular_text}"""

@@ -74,11 +74,15 @@ def extract_rows_from_page(driver):
         print(f"Error extracting rows from page: {e}")
     return circulars_found
 
-def get_sebi_circulars(max_pages=21, stop_if_exists=False):
+def get_sebi_circulars(max_pages=21, stop_if_exists=False, category='Public Comments'):
     db.init_db()
     driver = init_driver()
-# wait, block by WAF? SEBI main page doesn't usually block.
-    url = "https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=4&ssid=38&smid=35"
+
+    if category == 'SEBI Circulars':
+        url = "https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=1&ssid=7&smid=0"
+    else:
+        url = "https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=4&ssid=38&smid=35"
+        
     driver.get(url)
     
     total_added = 0
@@ -96,7 +100,7 @@ def get_sebi_circulars(max_pages=21, stop_if_exists=False):
         page_added = 0
         for circ in current_page_circulars:
             if not circ.get("exists", False):
-                inserted = db.insert_circular(circ["date"], circ["title"], circ["pdf_url"])
+                inserted = db.insert_circular(circ["date"], circ["title"], circ["pdf_url"], category)
                 if inserted:
                     page_added += 1
             elif stop_if_exists:
@@ -120,13 +124,13 @@ def get_sebi_circulars(max_pages=21, stop_if_exists=False):
     driver.quit()
     return total_added
 
-def scrape_all():
-    print("Scraping all pages up to 21...")
-    return get_sebi_circulars(max_pages=21, stop_if_exists=False)
+def scrape_all(category='Public Comments'):
+    print(f"Scraping all pages up to {50 if category == 'SEBI Circulars' else 21} for {category}...")
+    return get_sebi_circulars(max_pages=50 if category == 'SEBI Circulars' else 21, stop_if_exists=False, category=category)
 
-def check_new():
-    print("Checking for new circulars...")
-    return get_sebi_circulars(max_pages=5, stop_if_exists=True)
+def check_new(category='Public Comments'):
+    print(f"Checking for new {category}...")
+    return get_sebi_circulars(max_pages=5, stop_if_exists=True, category=category)
 
 if __name__ == "__main__":
     print(f"Total new circulars inserted testing first 1 page: {get_sebi_circulars(max_pages=1)}")

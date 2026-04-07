@@ -19,16 +19,24 @@ def init_db():
         )
     ''')
     conn.commit()
+    
+    # Add category column if it doesn't exist
+    try:
+        cursor.execute("ALTER TABLE circulars ADD COLUMN category TEXT DEFAULT 'Public Comments'")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # Column already exists
+    
     conn.close()
 
-def insert_circular(date, title, pdf_url):
+def insert_circular(date, title, pdf_url, category='Public Comments'):
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute('''
-            INSERT INTO circulars (date, title, pdf_url)
-            VALUES (?, ?, ?)
-        ''', (date, title, pdf_url))
+            INSERT INTO circulars (date, title, pdf_url, category)
+            VALUES (?, ?, ?, ?)
+        ''', (date, title, pdf_url, category))
         conn.commit()
         inserted = True
     except sqlite3.IntegrityError:
@@ -40,7 +48,7 @@ def insert_circular(date, title, pdf_url):
 def get_all_circulars():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM circulars')
+    cursor.execute('SELECT id, date, title, pdf_url, summary, category FROM circulars')
     rows = cursor.fetchall()
     conn.close()
     
@@ -51,7 +59,8 @@ def get_all_circulars():
             'date': row[1],
             'title': row[2],
             'pdf_url': row[3],
-            'summary': row[4]
+            'summary': row[4],
+            'category': row[5] if list(row)[5] else 'Public Comments'
         })
     return circulars
 
@@ -76,7 +85,7 @@ def delete_summary(circular_id):
 def get_circular_by_title(title):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM circulars WHERE title = ?', (title,))
+    cursor.execute('SELECT id, date, title, pdf_url, summary, category FROM circulars WHERE title = ?', (title,))
     row = cursor.fetchone()
     conn.close()
     if row:
@@ -85,7 +94,8 @@ def get_circular_by_title(title):
             'date': row[1],
             'title': row[2],
             'pdf_url': row[3],
-            'summary': row[4]
+            'summary': row[4],
+            'category': row[5] if list(row)[5] else 'Public Comments'
         }
     return None
 

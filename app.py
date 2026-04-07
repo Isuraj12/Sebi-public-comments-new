@@ -5,6 +5,9 @@ import summarizer
 import time
 from datetime import datetime
 
+# Ensure DB is initialized and schemas are up to date
+db.init_db()
+
 st.set_page_config(page_title="SEBI Circulars Extractor & Summarizer", page_icon="📜", layout="wide")
 
 st.title("SEBI Circular Extractor & AI Summarizer")
@@ -14,21 +17,26 @@ st.markdown("Easily extract, view, and analyze SEBI Consultation Papers and Circ
 st.sidebar.header("Configuration")
 api_key = st.sidebar.text_input("API Key", type="password", help="Required to generate summarization using Gemini 2.5 Flash")
 
+# Service Selection
+selected_service = st.sidebar.selectbox("Select Service:", ["Public Comments", "SEBI Circulars"], help="Choose the SEBI section to manage or view")
+
 st.sidebar.markdown("---")
-st.sidebar.header("Manage Circulars")
+st.sidebar.header(f"Manage {selected_service}")
 
 # Check new circulars button
-if st.sidebar.button("Check New Circulars (Fast Delta)", help="Checks maximum 5 pages and stops instantly on duplicates.", use_container_width=True):
-    with st.spinner("Checking for new circulars on SEBI website..."):
-        added = scraper.check_new()
+if st.sidebar.button(f"Check New {selected_service}", help="Checks maximum 5 pages and stops instantly on duplicates.", use_container_width=True):
+    with st.spinner(f"Checking for new items on SEBI {selected_service}..."):
+        added = scraper.check_new(category=selected_service)
         if added > 0:
-            st.sidebar.success(f"{added} new circular(s) found and added!")
+            st.sidebar.success(f"{added} new {selected_service} found and added!")
             time.sleep(2)
             st.rerun()
         else:
-            st.sidebar.info("No new circulars found.")
+            st.sidebar.info("No new items found.")
 
 circs = db.get_all_circulars()
+# Filter by selected service
+circs = [c for c in circs if c.get('category', 'Public Comments') == selected_service]
 
 st.sidebar.markdown("---")
 with st.sidebar.expander("Admin: Delete Summary", expanded=False):
@@ -49,7 +57,7 @@ with st.sidebar.expander("Admin: Delete Summary", expanded=False):
                 st.error("Incorrect password.")
 
 if not circs:
-    st.info("The system is currently fetching circulars in the background! Please wait a moment and refresh this page to see the newly downloaded circulars.")
+    st.info(f"There are no {selected_service} in the database yet. Click Check New {selected_service} to fetch data!")
     st.stop()
 
 # Circular selection - sorting by date descending
