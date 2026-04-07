@@ -198,6 +198,8 @@ Strengthen implementation logic, or
 
 Enhance alignment with India’s market-development objectives.
 
+DO NOT MISS ANY "PROPOSAL". Give Explaniation of each Proposal. 
+
 Example format:
 
 How will SEBI ensure that [specific reform] does not create duplicative compliance obligations for already listed entities?
